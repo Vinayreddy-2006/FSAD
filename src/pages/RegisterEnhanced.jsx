@@ -101,8 +101,10 @@ const RegisterEnhanced = () => {
       } else {
         navigate('/login');
       }
-    } catch {
-      setErrors({ form: 'Registration failed. Please check that the backend server is running.' });
+    } catch (error) {
+      setErrors({
+        form: error.message || 'Registration failed. Please check that the backend server is running.',
+      });
     } finally {
       setLoading(false);
     }
