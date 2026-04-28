@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       return allUsers;
     } catch (error) {
       setUsersLoaded(true);
-      setAuthError('Unable to connect to the backend server.');
+      setAuthError(error.message || 'Unable to connect to the backend server.');
       console.error('Failed to load users', error);
       throw error;
     }

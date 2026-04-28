@@ -1,8 +1,47 @@
-export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
+const normalizeBaseUrl = (url) => url.replace(/\/$/, "");
+
+const getDefaultBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return normalizeBaseUrl(import.meta.env.VITE_API_URL);
+  }
+
+  if (typeof window === "undefined") {
+    return "http://localhost:8081/api";
+  }
+
+  const { hostname, origin, port, protocol } = window.location;
+  const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
+  const isViteDevServer = port === "5173" || port === "5174";
+
+  if (isViteDevServer && !isLocalHost) {
+    return `http://${hostname}:8081/api`;
+  }
+
+  if (isLocalHost) {
+    return "http://localhost:8081/api";
+  }
+
+  if (protocol === "https:") {
+    return `${origin}/api`;
+  }
+
+  return `http://${hostname}:8081/api`;
+};
+
+export const BASE_URL = getDefaultBaseUrl();
+
+const getConnectionError = () =>
+  new Error(`Unable to connect to the backend at ${BASE_URL}. Check VITE_API_URL and make sure the backend is reachable from this device.`);
 
 // Users
 export const getUsers = async () => {
-  const res = await fetch(`${BASE_URL}/users`);
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/users`);
+  } catch {
+    throw getConnectionError();
+  }
+
   if (!res.ok) {
     throw new Error("Failed to fetch users");
   }
@@ -10,13 +49,18 @@ export const getUsers = async () => {
 };
 
 export const createUser = async (data) => {
-  const res = await fetch(`${BASE_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw getConnectionError();
+  }
 
   if (!res.ok) {
     let message = "Failed to create user";
@@ -34,12 +78,18 @@ export const createUser = async (data) => {
 
 // Donations
 export const createDonation = async (data) => {
-  const res = await fetch(`${BASE_URL}/donations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/donations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw getConnectionError();
+  }
+
   return res.json();
 };
