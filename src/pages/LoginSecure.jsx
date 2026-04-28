@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getUsers } from '../api/api';
 
 const ROLES = [
   { name: 'admin', title: 'Admin', subtitle: 'Admin', desc: 'Manage drives and platform activity', gradient: 'linear-gradient(135deg,#8b5cf6,#6d28d9)' },
@@ -20,50 +19,31 @@ const getLoginErrorMessage = (error) => {
 };
 
 const LoginSecure = () => {
-  const { login } = useContext(AuthContext);
+  const { login, users, usersLoaded, authError, refreshUsers } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('donor');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [registeredUsers, setRegisteredUsers] = useState([]);
-  const [usersLoaded, setUsersLoaded] = useState(false);
+  const registeredUsers = users.map((user) => ({
+    ...user,
+    role: user.role?.toLowerCase() || user.role,
+  }));
   const hasAnyUser = registeredUsers.length > 0;
-
-  useEffect(() => {
-    const remembered = localStorage.getItem('rememberedEmail');
-    if (remembered) {
-      setEmail(remembered);
-    }
-  }, []);
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const data = await getUsers();
-        setRegisteredUsers(
-          data.map((user) => ({
-            ...user,
-            role: user.role?.toLowerCase() || user.role,
-          }))
-        );
+        await refreshUsers({ ensureAdmin: true });
       } catch {
         setErrors({ form: 'Unable to load registered users. Please check that the backend server is running.' });
-      } finally {
-        setUsersLoaded(true);
       }
     };
 
     loadUsers();
-  }, []);
-
-  useEffect(() => {
-    if (usersLoaded && !hasAnyUser) {
-      navigate('/register');
-    }
-  }, [hasAnyUser, navigate, usersLoaded]);
+  }, [refreshUsers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,13 +84,15 @@ const LoginSecure = () => {
             <div className="auth-highlight">
               <strong>Registered users only</strong>
               <span>
-                {hasAnyUser
+                {!usersLoaded
+                  ? 'Connecting to the server...'
+                  : hasAnyUser
                   ? `${registeredUsers.length} account${registeredUsers.length > 1 ? 's are' : ' is'} available. Use the same role selected during registration.`
                   : 'No accounts exist yet. Create an account before trying to log in.'}
               </span>
             </div>
 
-            {!hasAnyUser && (
+            {usersLoaded && !hasAnyUser && (
               <div className="error-text login-form-alert">
                 No accounts found. Please register first.
               </div>
@@ -196,7 +178,9 @@ const LoginSecure = () => {
               <a href="#" className="link-muted" onClick={(e) => e.preventDefault()}>Forgot password?</a>
             </div>
 
-            {errors.form && <div className="error-text login-form-alert">{errors.form}</div>}
+            {(errors.form || authError) && (
+              <div className="error-text login-form-alert">{errors.form || authError}</div>
+            )}
 
             <div className="login-signup">
               <p>Don't have an account? <Link to="/register" className="link-muted">Sign up</Link></p>

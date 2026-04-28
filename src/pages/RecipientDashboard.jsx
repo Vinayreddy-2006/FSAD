@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const BASE_URL = "http://localhost:8081/api";
+import { BASE_URL } from '../api/api';
 
 const RecipientDashboard = () => {
 

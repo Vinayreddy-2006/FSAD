@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useState } from 'react';
 import { createUser, getUsers } from '../api/api';
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -12,32 +12,43 @@ const ADMIN_PASSWORD = '123';
 export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(() => localStorage.getItem('reliefconnect_role'));
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('reliefconnect_email'));
+  const [users, setUsers] = useState([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [authError, setAuthError] = useState('');
 
-  useEffect(() => {
-    const ensureDefaultAdminAccount = async () => {
-      try {
-        const allUsers = await getUsers();
-        const adminUser = allUsers.find((user) => normalizeRole(user.role) === 'admin');
+  const refreshUsers = useCallback(async ({ force = false, ensureAdmin = false } = {}) => {
+    if (usersLoaded && !force) {
+      return users;
+    }
 
-        if (!adminUser) {
-          await createUser({
-            name: 'Administrator',
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-            role: 'ADMIN',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to ensure default admin account', error);
+    try {
+      setAuthError('');
+      let allUsers = await getUsers();
+
+      if (ensureAdmin && !allUsers.some((user) => normalizeRole(user.role) === 'admin')) {
+        await createUser({
+          name: 'Administrator',
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+          role: 'ADMIN',
+        });
+        allUsers = await getUsers();
       }
-    };
 
-    ensureDefaultAdminAccount();
-  }, []);
+      setUsers(allUsers);
+      setUsersLoaded(true);
+      return allUsers;
+    } catch (error) {
+      setUsersLoaded(true);
+      setAuthError('Unable to connect to the backend server.');
+      console.error('Failed to load users', error);
+      throw error;
+    }
+  }, [users, usersLoaded]);
 
   const login = async ({ email, password, expectedRole }) => {
     const normalizedEmail = normalizeEmail(email);
-    const allUsers = await getUsers();
+    const allUsers = await refreshUsers({ ensureAdmin: true });
     const matchedUser = allUsers.find((user) => normalizeEmail(user.email) === normalizedEmail);
 
     if (!matchedUser) {
@@ -71,7 +82,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ name, email, password, role: requestedRole, adminPassword }) => {
     const normalizedEmail = normalizeEmail(email);
-    const allUsers = await getUsers();
+    const allUsers = await refreshUsers({ ensureAdmin: true });
     const existing = allUsers.find((user) => normalizeEmail(user.email) === normalizedEmail);
 
     if (existing) {
@@ -98,11 +109,15 @@ export const AuthProvider = ({ children }) => {
       role: requestedRole.toUpperCase(),
     });
 
+    await refreshUsers({ force: true });
+
     return { success: true };
   };
 
   return (
-    <AuthContext.Provider value={{ role, userEmail, login, logout, register }}>
+    <AuthContext.Provider
+      value={{ role, userEmail, users, usersLoaded, authError, refreshUsers, login, logout, register }}
+    >
       {children}
     </AuthContext.Provider>
   );

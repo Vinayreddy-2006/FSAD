@@ -15,9 +15,6 @@ import DonorDashboard from './pages/DonorDashboard';
 import RecipientDashboard from './pages/RecipientDashboard';
 import LogisticsDashboard from './pages/LogisticsDashboard';
 
-// ✅ ADD THIS (for backend URL)
-export const BASE_URL = "http://localhost:8081/api";
-
 function AppContent() {
   const { role } = useContext(AuthContext);
   const navigate = useNavigate();

@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getUsers } from '../api/api';
 
 const ROLES = [
   { name: 'admin', icon: 'Admin', desc: 'Manage and oversee drives', gradient: 'linear-gradient(135deg,#a78bfa,#9333ea)' },
@@ -13,43 +12,28 @@ const ROLES = [
 const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { login, users, usersLoaded, authError, refreshUsers } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('donor');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const [hasAnyUser, setHasAnyUser] = useState(false);
-  const [usersLoaded, setUsersLoaded] = useState(false);
-
-  useEffect(() => {
-    const remembered = localStorage.getItem('rememberedEmail');
-    if (remembered) {
-      setEmail(remembered);
-      setRemember(true);
-    }
-  }, []);
+  const [remember, setRemember] = useState(() => Boolean(localStorage.getItem('rememberedEmail')));
+  const hasAnyUser = users.length > 0;
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const all = await getUsers();
-        setHasAnyUser(all.length > 0);
-        if (all.length === 0) {
-          navigate('/register');
-        }
+        await refreshUsers({ ensureAdmin: true });
       } catch {
         setErrors({ form: 'Unable to load users. Please check that the backend server is running.' });
-      } finally {
-        setUsersLoaded(true);
       }
     };
 
     loadUsers();
-  }, [navigate]);
+  }, [refreshUsers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -175,7 +159,11 @@ const Login = () => {
             <a href="#" className="link-muted" onClick={(e) => e.preventDefault()}>Forgot password?</a>
           </div>
 
-          {errors.form && <div className="error-text" style={{ textAlign: 'center', marginTop: '0.75rem' }}>{errors.form}</div>}
+          {(errors.form || authError) && (
+            <div className="error-text" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+              {errors.form || authError}
+            </div>
+          )}
 
           <div style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-light)' }}>
             <p>Don't have an account? <Link to="/register" className="link-muted">Sign up</Link></p>

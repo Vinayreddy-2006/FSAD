@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-
-const BASE_URL = 'http://localhost:8081/api';
+import { BASE_URL } from '../api/api';
 
 const formatDateTime = (isoValue) => {
   if (!isoValue) return 'N/A';

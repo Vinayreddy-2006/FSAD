@@ -1,8 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-
-const BASE_URL = "http://localhost:8081/api";
+import { BASE_URL } from '../api/api';
 
 const DonorDashboard = () => {
   const { logout } = useContext(AuthContext);
