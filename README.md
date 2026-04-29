@@ -7,7 +7,7 @@ A responsive React single-page application for coordinating disaster relief dona
 * **Recipient** – register, submit requests for aid, monitor delivery progress.
 * **Logistics** – view approved donations and requests, mark items in transit or delivered.
 
-The project is built with [Vite](https://vitejs.dev/) and uses browser **localStorage** for persistence; it is structured to allow easy backend integration later.
+The project is built with [Vite](https://vitejs.dev/) and connects to a REST backend through `VITE_API_URL`.
 
 ---
 
@@ -42,16 +42,79 @@ Screenshots are included in the repository to illustrate UI states (landing page
    ```
    Open [http://localhost:5174](http://localhost:5174) in your browser (port may vary).
 
-4. Lint the codebase:
+4. Check backend connection:
+   ```bash
+   npm run check:api
+   ```
+
+5. Lint the codebase:
    ```bash
    npm run lint
    ```
 
-5. Build for production:
+6. Build for production:
    ```bash
    npm run build
    npm run preview   # serve the built output locally
    ```
+
+---
+
+## Backend Requirements
+
+The frontend expects a REST API with these endpoints:
+
+```text
+GET  /api/users
+POST /api/users
+GET  /api/drives
+POST /api/drives
+GET  /api/donations
+POST /api/donations
+PUT/PATCH /api/donations/:id
+GET  /api/requests
+POST /api/requests
+PUT/PATCH /api/requests/:id
+```
+
+Required deployment rules:
+
+* The backend must be running and publicly reachable for deployed/mobile use.
+* If the frontend is `https://`, the backend must also be `https://`.
+* Backend CORS must allow the frontend domain.
+* The API base URL must include `/api`, but not endpoint names like `/users`.
+
+Configure the frontend API URL:
+
+```env
+VITE_API_URL=https://your-backend-url.onrender.com/api
+```
+
+For local laptop development:
+
+```env
+VITE_API_URL=http://localhost:8081/api
+```
+
+For phone testing on the same Wi-Fi:
+
+```env
+VITE_API_URL=http://YOUR_LAPTOP_IP:8081/api
+```
+
+Then start Vite so the phone can access it:
+
+```bash
+npm run dev -- --host 0.0.0.0
+```
+
+Run this before testing login/register:
+
+```bash
+npm run check:api
+```
+
+All endpoints should show `OK`. If they show `FAIL`, the frontend is not connected to the backend yet.
 
 ---
 
@@ -82,7 +145,7 @@ DonationPlatform/
 3. Use the **Logout** link in the header to sign out.
 4. Donors can pledge new donations via the form, admins can create drives and approve items, etc.
 
-The login page will redirect to registration if no users exist; credentials are validated against stored user records, and role mismatches are reported.
+Credentials are validated against backend user records, and role mismatches are reported.
 
 ---
 
