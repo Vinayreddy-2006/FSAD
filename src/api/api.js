@@ -1,4 +1,11 @@
-const normalizeBaseUrl = (url) => url.replace(/\/$/, "");
+const normalizeBaseUrl = (url) => {
+  const trimmedUrl = url.trim().replace(/\/$/, "");
+  if (/^https?:\/\//i.test(trimmedUrl)) {
+    return trimmedUrl;
+  }
+
+  return `https://${trimmedUrl}`;
+};
 
 const getDefaultBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {

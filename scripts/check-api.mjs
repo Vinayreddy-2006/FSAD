@@ -1,4 +1,33 @@
-const baseUrl = (process.env.VITE_API_URL || 'http://localhost:8081/api').replace(/\/$/, '');
+import { existsSync, readFileSync } from 'node:fs';
+
+const envValues = {};
+
+if (existsSync('.env')) {
+  const envFile = readFileSync('.env', 'utf8');
+  for (const line of envFile.split(/\r?\n/)) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+
+    const separatorIndex = trimmedLine.indexOf('=');
+    if (separatorIndex === -1) continue;
+
+    const key = trimmedLine.slice(0, separatorIndex).trim();
+    const value = trimmedLine.slice(separatorIndex + 1).trim();
+    envValues[key] = value;
+  }
+}
+
+const normalizeBaseUrl = (url) => {
+  const trimmedUrl = url.trim().replace(/\/$/, '');
+  if (/^https?:\/\//i.test(trimmedUrl)) {
+    return trimmedUrl;
+  }
+
+  return `https://${trimmedUrl}`;
+};
+
+const configuredUrl = process.env.VITE_API_URL || envValues.VITE_API_URL || 'http://localhost:8081/api';
+const baseUrl = normalizeBaseUrl(configuredUrl);
 const endpoints = ['users', 'drives', 'donations', 'requests'];
 
 console.log(`Checking backend: ${baseUrl}`);
