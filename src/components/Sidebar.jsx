@@ -4,26 +4,25 @@ import { AuthContext } from '../context/AuthContext';
 
 const Sidebar = () => {
   const { role, logout } = useContext(AuthContext);
-  const [activeHash, setActiveHash] = useState(() => window.location.hash || '#dashboard');
+  const [activeHash, setActiveHash] = useState(() => window.location.hash || '');
 
   const menuItems = {
     admin: [
-      { label: 'Dashboard', icon: '\uD83D\uDCCA', href: '/admin#dashboard' },
       { label: 'Messages', icon: '\uD83D\uDCAC', href: '/admin#donor-messages' },
       { label: 'Drives', icon: '\uD83D\uDE9A', href: '/admin#create-drive' },
       { label: 'Insights', icon: '\uD83D\uDCC8', href: '/admin#platform-insights' },
       { label: 'Donations', icon: '\uD83C\uDF81', href: '/admin#pending-donations' },
       { label: 'Requests', icon: '\uD83D\uDCE6', href: '/admin#pending-requests' },
     ],
-    donor: [{ label: 'Dashboard', icon: '\uD83D\uDC9D', href: '/donor' }],
-    recipient: [{ label: 'Dashboard', icon: '\uD83E\uDD1D', href: '/recipient' }],
-    logistics: [{ label: 'Dashboard', icon: '\uD83D\uDE9A', href: '/logistics' }],
+    donor: [],
+    recipient: [],
+    logistics: [],
   };
 
   const items = menuItems[role] || [];
 
   useEffect(() => {
-    const onHashChange = () => setActiveHash(window.location.hash || '#dashboard');
+    const onHashChange = () => setActiveHash(window.location.hash || '');
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);

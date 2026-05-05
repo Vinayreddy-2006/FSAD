@@ -4,8 +4,6 @@ import { AuthContext } from '../context/AuthContext';
 
 const Header = () => {
   const { role, logout } = useContext(AuthContext);
-  const dashboardPath = role ? `/${role}` : '/';
-
   return (
     <header>
       <div className="header-container">
@@ -17,7 +15,6 @@ const Header = () => {
           <Link to="/">Home</Link>
           {role ? (
             <>
-              <Link to={dashboardPath}>Dashboard</Link>
               <span className="header-role-pill">
                 {role.charAt(0).toUpperCase() + role.slice(1)}
               </span>
